@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import Mock, MagicMock
 
 from chatbot.domain.models import ChatMessage, Conversation
-# ¡Importamos los nuevos puertos que vamos a mockear!
 from chatbot.domain.ports import ConversationRepository, GenerativeAIProvider
 from chatbot.domain.services import ChatService
 

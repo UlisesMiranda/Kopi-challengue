@@ -2,7 +2,6 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock
 
-# Importamos la 'app' de FastAPI, los modelos y la dependencia que vamos a sobreescribir
 from chatbot.adapters.api.main import app, get_chat_service
 from chatbot.domain.models import Conversation, ChatMessage
 from chatbot.domain.ports import ChatUseCase

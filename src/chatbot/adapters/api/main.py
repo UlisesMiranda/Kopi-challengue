@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Depends
 
-from chatbot.bootstrap import get_chat_service  # Inyección de dependencias
+from chatbot.bootstrap import get_chat_service
 from chatbot.domain.ports import ChatUseCase
 from .models import ChatRequest, ChatResponse
 
