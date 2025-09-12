@@ -12,7 +12,9 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "pydantic",
-    "openai"
+    "openai",
+    "redis",
+    "fakeredis"
 ]
 
 [project.optional-dependencies]

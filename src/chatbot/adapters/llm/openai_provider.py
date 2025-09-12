@@ -112,3 +112,43 @@ class OpenAIProvider(GenerativeAIProvider):
         except openai.APIError as e:
             print(f"Error generating OpenAI response: {e}")
             return "I'm having trouble thinking of a counter-argument right now. Let's try another topic."
+
+    def is_topic_change(self, message: str, original_topic: str) -> bool:
+        """
+        Uses OpenAI to determine if the user's message indicates a change in topic.
+
+        Args:
+            message (str): The user's current message.
+            original_topic (str): The current topic of the conversation.
+
+        Returns:
+            bool: True if the message indicates a topic change, False otherwise.
+        """
+
+        prompt = f"""
+           You are a topic analysis expert. The current conversation is about "{original_topic}".
+           Analyze the following user message and determine if it tries to change the subject to something completely different.
+           The message is: "{message}"
+
+           Is the user trying to change the topic? Respond with a JSON object containing a single boolean key "is_topic_change".
+           For example:
+           - If the original topic is "moon-landing" and the message is "I think the Apollo 11 mission was a success", your response should be {{"is_topic_change": false}}.
+           - If the original topic is "moon-landing" and the message is "Let's talk about vaccines instead", your response should be {{"is_topic_change": true}}.
+           """
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that responds in JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.0,
+                response_format={"type": "json_object"}
+            )
+            content = response.choices[0].message.content
+            result = json.loads(content)
+            return result.get("is_topic_change", True)  # Default to True if key is missing
+        except (json.JSONDecodeError, KeyError, AttributeError):
+            # If the API fails or returns an unexpected format, assume it's a topic change to be safe.
+            return True

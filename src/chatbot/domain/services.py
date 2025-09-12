@@ -46,6 +46,14 @@ class ChatService(ChatUseCase):
             conversation = self._repository.find_by_id(conversation_id)
             if not conversation:
                 raise ValueError("Conversation not found")
+
+            if self._ai_provider.is_topic_change(message=message, original_topic=conversation.topic):
+                conversation.messages.append(ChatMessage(role="user", message=message))
+                bot_response = f"I'm sorry, but we are discussing '{conversation.topic}'. Let's stick to that topic."
+                conversation.messages.append(ChatMessage(role="bot", message=bot_response))
+                self._repository.save(conversation)
+                return conversation
+
         else:
             topic_info = self._ai_provider.classify_topic_and_stance(message)
             user_stance = topic_info.get("stance", "unknown")
@@ -62,7 +70,7 @@ class ChatService(ChatUseCase):
         bot_response = self._ai_provider.get_debate_response(
             topic=conversation.topic,
             position=conversation.strategy,
-            history=conversation.messages
+            history=conversation.messages[-5:]
         )
         conversation.messages.append(ChatMessage(role="bot", message=bot_response))
 

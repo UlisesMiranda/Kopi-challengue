@@ -70,3 +70,17 @@ class GenerativeAIProvider(ABC):
                   Example: {"topic": "climate change", "stance": "pro"}
         """
         pass
+
+    @abstractmethod
+    def is_topic_change(self, message: str, original_topic: str) -> bool:
+        """
+        Determines if a new message attempts to change the conversation's original topic.
+
+        Args:
+            message (str): The new user message.
+            original_topic (str): The established topic of the conversation.
+
+        Returns:
+            bool: True if the message is off-topic, False otherwise.
+        """
+        pass
