@@ -1,4 +1,9 @@
 import json
+
+import pytest
+from chatbot.adapters.storage.in_memory import InMemoryConversationRepository
+from chatbot.bootstrap import get_chat_service
+from chatbot.domain.services import ChatService
 from fastapi.testclient import TestClient
 from chatbot.adapters.api.main import app
 
@@ -11,6 +16,22 @@ MOCK_CLASSIFY_RESPONSE = {
 MOCK_DEBATE_RESPONSE_1 = "Have you considered the historical adverse reactions that caused public skepticism?"
 MOCK_DEBATE_RESPONSE_2 = "Science isn't always clear, especially when studies are funded by pharmaceutical companies."
 
+@pytest.fixture(autouse=True)
+def override_dependencies():
+    """
+    Overrides the dependencies for testing purposes.
+    """
+
+    from chatbot.adapters.llm.openai_provider import OpenAIProvider
+    repo = InMemoryConversationRepository()
+    ai_provider = OpenAIProvider()
+    test_service = ChatService(repository=repo, ai_provider=ai_provider)
+
+    app.dependency_overrides[get_chat_service] = lambda: test_service
+
+    yield
+
+    app.dependency_overrides.clear()
 
 def test_full_flow_new_and_continue_conversation(httpx_mock: object):
     """
@@ -40,7 +61,12 @@ def test_full_flow_new_and_continue_conversation(httpx_mock: object):
     assert "conversation_id" in data_1
     assert data_1["message"][1]["role"] == "bot"
     assert data_1["message"][1]["message"] == MOCK_DEBATE_RESPONSE_1
-    print(f"Respuesta del Bot 1: {data_1['message'][1]['message']}")
+
+    httpx_mock.add_response(
+        url=openai_url,
+        method="POST",
+        json={"choices": [{"message": {"content": json.dumps({"is_topic_change": False})}}]}
+    )
 
     httpx_mock.add_response(
         url=openai_url,
@@ -61,8 +87,6 @@ def test_full_flow_new_and_continue_conversation(httpx_mock: object):
     assert len(data_2["message"]) == 4
     assert data_2["message"][3]["role"] == "bot"
     assert data_2["message"][3]["message"] == MOCK_DEBATE_RESPONSE_2
-    print(f"Respuesta del Bot 2: {data_2['message'][3]['message']}")
-
 
 def test_health_check_integration():
     """

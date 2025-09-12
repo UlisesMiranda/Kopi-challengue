@@ -3,6 +3,9 @@ from typing import Optional
 from .models import Conversation, ChatMessage
 from .ports import ChatUseCase, ConversationRepository, GenerativeAIProvider
 
+MAX_USER_MESSAGES = 5
+MAX_CONVERSATION_MESSAGES = MAX_USER_MESSAGES * 2
+
 OPPOSING_STANCES = {
     "pro-moon-landing": "anti-moon-landing",
     "anti-moon-landing": "pro-moon-landing",
@@ -46,6 +49,13 @@ class ChatService(ChatUseCase):
             conversation = self._repository.find_by_id(conversation_id)
             if not conversation:
                 raise ValueError("Conversation not found")
+
+            if len(conversation.messages) >= MAX_CONVERSATION_MESSAGES:
+                bot_response = f"You have reached the {MAX_USER_MESSAGES}-message limit for this conversation. Please start a new one to discuss another topic."
+                conversation.messages.append(ChatMessage(role="user", message=message))
+                conversation.messages.append(ChatMessage(role="bot", message=bot_response))
+                self._repository.save(conversation)
+                return conversation
 
             if self._ai_provider.is_topic_change(message=message, original_topic=conversation.topic):
                 conversation.messages.append(ChatMessage(role="user", message=message))

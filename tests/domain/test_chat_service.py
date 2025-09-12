@@ -97,6 +97,7 @@ def test_process_message_for_existing_conversation(
     )
     mock_repository.find_by_id.return_value = existing_conversation
     mock_ai_provider.get_debate_response.return_value = "Evidence can be fabricated."
+    mock_ai_provider.is_topic_change.return_value = False
 
     result_conversation = chat_service.process_message(
         message=user_message, conversation_id=conversation_id
